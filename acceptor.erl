@@ -1,6 +1,10 @@
 -module(acceptor).
 -export([start/2]).
 
+-define(delay, 200).
+%-define(drop, 10000000000).
+%-define(drop, 3).
+
 start(Name, PanelId) ->
     spawn(fun() -> init(Name, PanelId) end).
         
@@ -15,9 +19,16 @@ init(Name, PanelId) ->
 acceptor(Name, Promised, Voted, Value, PanelId) ->
   receive
     {prepare, Proposer, Round} ->
+        %R = random:uniform(?delay),
+        %timer:sleep(R),
         case order:gr(Round, Promised) of
             true ->
-                Proposer ! {promise, Round, Voted, Value},               
+                case random:uniform(?drop) of 
+                    ?drop ->
+                        io:format("Message dropped~n");
+                    _ -> %send message
+                        Proposer ! {promise, Round, Voted, Value}%,               
+                end,
                 % Update gui
                 if
                     Value == na ->
@@ -36,9 +47,16 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     {accept, Proposer, Round, Proposal} ->
+        %R = random:uniform(?delay),
+        %timer:sleep(R),
         case order:goe(Round, Promised) of
             true ->
-                Proposer ! {vote, Round},
+                case random:uniform(?drop) of 
+                    ?drop ->
+                        io:format("Message dropped~n");
+                    _ -> %send message
+                        Proposer ! {vote, Round}%,
+                end,
                 case order:goe(Round, Voted) of
                     true ->
                         % Update gui
