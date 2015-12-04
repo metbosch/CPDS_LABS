@@ -1,8 +1,8 @@
 -module(acceptor).
 -export([start/2]).
 
--define(delay, 200).
-%-define(drop, 10000000000).
+-define(delay, 2000).
+-define(drop, 10000000000).
 %-define(drop, 3).
 
 start(Name, PanelId) ->
@@ -19,8 +19,8 @@ init(Name, PanelId) ->
 acceptor(Name, Promised, Voted, Value, PanelId) ->
   receive
     {prepare, Proposer, Round} ->
-        %R = random:uniform(?delay),
-        %timer:sleep(R),
+        R = random:uniform(?delay),
+        timer:sleep(R),
         case order:gr(Round, Promised) of
             true ->
                 case random:uniform(?drop) of 
@@ -47,8 +47,8 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     {accept, Proposer, Round, Proposal} ->
-        %R = random:uniform(?delay),
-        %timer:sleep(R),
+        R = random:uniform(?delay),
+        timer:sleep(R),
         case order:goe(Round, Promised) of
             true ->
                 case random:uniform(?drop) of 
