@@ -37,7 +37,7 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
     prepare(Round, Acceptors),
     Quorum = (length(Acceptors) div 2) + 1,
     MaxVoted = order:null(),
-    case collect(Quorum, Round, MaxVoted, Proposal) of
+    case collect(Quorum, Round, MaxVoted, Proposal, Quorum) of
         {accepted, Value} ->
             % update gui
             io:format("[Proposer ~w] Phase 2: round ~w proposal ~w (was ~w)~n", 
@@ -46,7 +46,7 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
                     ++ io_lib:format("~p", [Round]), "Proposal: "
                     ++ io_lib:format("~p", [Value]), Value},
             accept(Round, Value, Acceptors),
-            case vote(Quorum, Round) of
+            case vote(Quorum, Round, Quorum) of
                 ok ->
                     {ok, Value};
                 abort ->
@@ -56,41 +56,43 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
             abort
     end.
 
-collect(0, _, _, Proposal) ->
+collect(0, _, _, Proposal, _) ->
     {accepted, Proposal};
-collect(N, Round, MaxVoted, Proposal) ->
+collect(_, _, _, _, 0) -> abort;
+collect(N, Round, MaxVoted, Proposal, Sorries) ->
     receive 
         {promise, Round, _, na} ->
-            collect(N-1, Round, MaxVoted, Proposal);
+            collect(N-1, Round, MaxVoted, Proposal, Sorries);
         {promise, Round, Voted, Value} ->
             case order:gr(Voted, MaxVoted) of
                 true ->
-                    collect(N-1, Round, Voted, Value);
+                    collect(N-1, Round, Voted, Value, Sorries);
                 false ->
-                    collect(N-1, Round, MaxVoted, Proposal)
+                    collect(N-1, Round, MaxVoted, Proposal, Sorries)
             end;
         {promise, _, _,  _} ->
-            collect(N, Round, MaxVoted, Proposal);
+            collect(N, Round, MaxVoted, Proposal, Sorries);
         {sorry, {prepare, Round}} ->
-            collect(N, Round, MaxVoted, Proposal);
+            collect(N, Round, MaxVoted, Proposal, Sorries-1);
         {sorry, _} ->
-            collect(N, Round, MaxVoted, Proposal)
+            collect(N, Round, MaxVoted, Proposal, Sorries)
     after ?timeout ->
             abort
     end.
 
-vote(0, _) ->
+vote(0, _, _) ->
     ok;
-vote(N, Round) ->
+vote(_, _, 0) -> abort;
+vote(N, Round, Sorries) ->
     receive
         {vote, Round} ->
-            vote(N-1, Round);
+            vote(N-1, Round, Sorries);
         {vote, _} ->
-            vote(N, Round);
+            vote(N, Round, Sorries);
         {sorry, {accept, Round}} ->
-            vote(N, Round);
+            vote(N, Round, Sorries-1);
         {sorry, _} ->
-            vote(N, Round)
+            vote(N, Round, Sorries)
     after ?timeout ->
             abort
     end.
