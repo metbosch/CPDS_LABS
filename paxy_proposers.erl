@@ -36,7 +36,7 @@ start(Sleep, AcceptorsControl) ->
         {startProposers, AccRegister, ProposersIds} ->
             start_proposers(ProposersIds, ProposersInfo, AccRegister, Sleep)
     end,
-    unregister(proposerControl),
+    unregister(proposersControl),
     true.
     
 

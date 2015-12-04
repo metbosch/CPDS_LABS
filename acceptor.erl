@@ -1,7 +1,7 @@
 -module(acceptor).
 -export([start/2]).
 
--define(delay, 2000).
+-define(delay, 1500).
 -define(drop, 10000000000).
 %-define(drop, 3).
 
@@ -11,12 +11,19 @@ start(Name, PanelId) ->
 init(Name, PanelId) ->
     {A1,A2,A3} = now(),
     random:seed(A1, A2, A3),
-    Promised = order:null(), 
-    Voted = order:null(),
-    Value = na,
-    acceptor(Name, Promised, Voted, Value, PanelId).
+    pers:open(Name),
+    {Promised, Voted, Value, Panel} = pers:read(Name),
+    case PanelId of
+        na -> 
+            io:format("Recovering from file"),
+            acceptor(Name, Promised, Voted, Value, Panel);
+        _ ->
+            io:format("Starting again"),
+            acceptor(Name, order:null(), order:null(), na, PanelId)
+    end.
 
 acceptor(Name, Promised, Voted, Value, PanelId) ->
+  pers:store(Name, Promised, Voted, Value, PanelId),
   receive
     {prepare, Proposer, Round} ->
         R = random:uniform(?delay),
@@ -80,6 +87,7 @@ acceptor(Name, Promised, Voted, Value, PanelId) ->
                 acceptor(Name, Promised, Voted, Value, PanelId)
         end;
     stop ->
+        dets:close(Name),
         PanelId ! stop,
         ok
   end.

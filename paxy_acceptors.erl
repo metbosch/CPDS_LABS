@@ -1,5 +1,5 @@
 -module(paxy_acceptors).
--export([start/0, stop/0, stop/1]).
+-export([start/0, stop/0, stop/1, crash/1]).
 
 -define(RED, {255,0,0}).
 -define(BLUE, {0,0,255}).
@@ -51,6 +51,7 @@ start_acceptors(AccIds, AccReg) ->
             ok;
         [AccId|Rest] ->
             [RegName|RegNameRest] = AccReg,
+            io:format("~p~n", [RegName]),
             register(RegName, acceptor:start(RegName, AccId)),
             start_acceptors(Rest, RegNameRest)
     end.
@@ -81,4 +82,17 @@ stop(Name) ->
             Pid ! stop
     end.
 
- 
+crash(Name) ->
+    case whereis(Name) of
+    undefined ->
+        ok;
+    Pid ->
+        pers:open(Name),
+        {_, _, _, Pn} = pers:read(Name),
+        Pn ! {updateAcc, "Voted: CRASHED", "Promised: CRASHED", {0,0,0}},
+        dets:close(Name),
+        unregister(Name),
+        exit(Pid, "crash"),
+        timer:sleep(2000),
+        register(Name, acceptor:start(Name, na))
+    end.
