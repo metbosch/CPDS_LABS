@@ -58,7 +58,9 @@ ballot(Name, Round, Proposal, Acceptors, PanelId) ->
 
 collect(0, _, _, Proposal, _) ->
     {accepted, Proposal};
-collect(_, _, _, _, 0) -> abort;
+collect(_, _, _, _, 0) -> 
+    io:format("Unable to get quorum, too many sorries received~n"), 
+    abort;
 collect(N, Round, MaxVoted, Proposal, Sorries) ->
     receive 
         {promise, Round, _, na} ->
@@ -82,7 +84,9 @@ collect(N, Round, MaxVoted, Proposal, Sorries) ->
 
 vote(0, _, _) ->
     ok;
-vote(_, _, 0) -> abort;
+vote(_, _, 0) ->
+    io:format("Unable to get quorum, too many sorries received~n"), 
+    abort;
 vote(N, Round, Sorries) ->
     receive
         {vote, Round} ->
