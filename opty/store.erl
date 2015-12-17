@@ -20,7 +20,14 @@ entries(N, ListSoFar) ->
     entries(N-1, [Entry|ListSoFar]).
 
 getSubset(Store, ClientId, N) ->
+    random:seed(ClientId, ClientId, ClientId),
     List = tuple_to_list(Store),
-    Ninit = max(0, N - length(List) + ClientId - 1 ),
-    Sublist = lists:sublist(List, ClientId, N) ++ lists:sublist(List,Ninit),
+    Sublist = genSubset(List, N),
     list_to_tuple(Sublist).
+
+genSubset(_, 0) ->
+    [];
+genSubset(Store, N) ->
+    Nselec = random:uniform(length(Store)),
+    [lists:nth(Nselec, Store)|genSubset(Store, N-1)].
+

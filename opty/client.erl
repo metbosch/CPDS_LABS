@@ -1,4 +1,4 @@
-module(client).
+-module(client).
 -export([start/5]).
 
 start(ClientID, Entries, Reads, Writes, Server) ->
