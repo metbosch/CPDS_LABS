@@ -7,11 +7,11 @@ start(ClientID, Entries, Reads, Writes, Server) ->
 open(ClientID, Entries, Reads, Writes, Server, Total, Ok) ->
     {A1,A2,A3} = now(),
     random:seed(A1, A2, A3),
-    Server ! {open, self()},
+    Server ! {open, self(), ClientID},
     receive
         {stop, From} ->
-            io:format("~w: Transactions TOTAL:~w, OK:~w, -> ~w % ~n",
-            [ClientID, Total, Ok, 100*Ok/Total]),
+            io:format("~w\t~w~n",
+            [Total, Ok]),
             From ! {done, self()},
             ok;
         {transaction, Validator, Store} ->

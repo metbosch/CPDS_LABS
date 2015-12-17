@@ -1,15 +1,16 @@
 -module(opty).
--export([start/5, stop/1]).
+-export([start/6, stop/1]).
 
 %% Clients: Number of concurrent clients in the system
 %% Entries: Number of entries in the store
+%% EntriesClient: Number of entries per client
 %% Reads: Number of read operations per transaction
 %% Writes: Number of write operations per transaction
 %% Time: Duration of the experiment (in secs)
 
-start(Clients, Entries, Reads, Writes, Time) ->
-    register(s, server:start(Entries)),
-    L = startClients(Clients, [], Entries, Reads, Writes),
+start(Clients, Entries, EntriesClient, Reads, Writes, Time) ->
+    register(s, server:start(Entries, EntriesClient)),
+    L = startClients(Clients, [], EntriesClient, Reads, Writes),
     io:format("Starting: ~w CLIENTS, ~w ENTRIES, ~w RDxTR, ~w WRxTR, DURATION ~w s~n", 
          [Clients, Entries, Reads, Writes, Time]),
     timer:sleep(Time*1000),
