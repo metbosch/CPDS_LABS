@@ -1,17 +1,14 @@
 -module(opty_server).
 -export([start/0]).
 
-%% Clients: Number of concurrent clients in the system
 %% Entries: Number of entries in the store
-%% Reads: Number of read operations per transaction
-%% Writes: Number of write operations per transaction
-%% Time: Duration of the experiment (in secs)
+%% EntriesClient: Number of entries per client
 
 start() ->
     register(start, self()),
     io:format("~p", [{start, node()}]),
     receive
-        {startup, Pid, Entries} ->  true
+        {startup, Pid, Entries, EntriesClient} ->  true
     end,
-    register(s, server:start(Entries)),
+    register(s, server:start(Entries, EntriesClient)),
     Pid ! {server, {s, node()}}.
